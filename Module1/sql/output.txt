@@ -1,0 +1,788 @@
+mysql> create table users (user_id int auto_increment,full_name varchar(100) not null,email varchar(100)unique not null,city varchar(100) not null,reg_date date not null,constraint pk_userid primary key(user_id));
+ERROR 1050 (42S01): Table 'users' already exists
+mysql> desc users;
++-----------+--------------+------+-----+---------+----------------+
+| Field     | Type         | Null | Key | Default | Extra          |
++-----------+--------------+------+-----+---------+----------------+
+| user_id   | int          | NO   | PRI | NULL    | auto_increment |
+| full_name | varchar(100) | NO   |     | NULL    |                |
+| email     | varchar(100) | NO   | UNI | NULL    |                |
+| city      | varchar(100) | NO   |     | NULL    |                |
+| reg_date  | date         | NO   |     | NULL    |                |
++-----------+--------------+------+-----+---------+----------------+
+5 rows in set (0.00 sec)
+
+mysql> create table events(event_id int auto_increment,title varchar(200)not null,description text,city varchar(100) not null,start_date datetime not null,end_date datetime not null,status enum('upcoming','completed','cancelled'),organizer_id int,constraint pk_eventid primary key(event_id),constraint fk_oid foreign key references users(user_id));
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'references users(user_id))' at line 1
+mysql> create table events(event_id int auto_increment,title varchar(200)not null,description text,city varchar(100) not null,start_date datetime not null,end_date datetime not null,status enum('upcoming','completed','cancelled'),organizer_id int,constraint pk_eventid primary key(event_id),constraint fk_oid foreign key(organizer_id) references users(user_id));
+Query OK, 0 rows affected (0.06 sec)
+
+mysql> show tables;
++---------------+
+| Tables_in_fsd |
++---------------+
+| events        |
+| users         |
++---------------+
+2 rows in set (0.01 sec)
+
+mysql> create table sessions(session_id int auto_increment,event_id int,title varchar(200) not null,speaker_name varchar(100) not null,start_time datetime not null,end_time datetime not null,constraint pk_sessionid primary key (session_id),constraint fk_eventid foreign key (event_id) references events(event_id));
+Query OK, 0 rows affected (0.07 sec)
+
+mysql> desc sessions;
++--------------+--------------+------+-----+---------+----------------+
+| Field        | Type         | Null | Key | Default | Extra          |
++--------------+--------------+------+-----+---------+----------------+
+| session_id   | int          | NO   | PRI | NULL    | auto_increment |
+| event_id     | int          | YES  | MUL | NULL    |                |
+| title        | varchar(200) | NO   |     | NULL    |                |
+| speaker_name | varchar(100) | NO   |     | NULL    |                |
+| start_time   | datetime     | NO   |     | NULL    |                |
+| end_time     | datetime     | NO   |     | NULL    |                |
++--------------+--------------+------+-----+---------+----------------+
+6 rows in set (0.00 sec)
+
+mysql> create table registrations (registration_id int auto_increment,user_id int,event_id int,registration_date date not null,constraint pk_regid primary key (registration_id),constraint fk_uid foreign key (user_id) references users(user_id),constraint fk_eid foreign key (event_id) references events(event_id));
+Query OK, 0 rows affected (0.15 sec)
+
+mysql> desc registrations;
++-------------------+------+------+-----+---------+----------------+
+| Field             | Type | Null | Key | Default | Extra          |
++-------------------+------+------+-----+---------+----------------+
+| registration_id   | int  | NO   | PRI | NULL    | auto_increment |
+| user_id           | int  | YES  | MUL | NULL    |                |
+| event_id          | int  | YES  | MUL | NULL    |                |
+| registration_date | date | NO   |     | NULL    |                |
++-------------------+------+------+-----+---------+----------------+
+4 rows in set (0.00 sec)
+
+mysql> create table feedback (feedback_id int auto_increment,user_id int,event_id int,rating int,comments text,feedback_date date not null,constraint pk_fbid primary key(feedback_id),constraint fk_uid foreign key (user_id) references users(user_id),constraint fk_eid foreign key(event_id) references events(event_id),constraint chk_rating check (rating>=1 and rating <=5));
+ERROR 1826 (HY000): Duplicate foreign key constraint name 'fk_uid'
+mysql> create table feedback (feedback_id int auto_increment,user_id int,event_id int,rating int,comments text,feedback_date date not null,constraint pk_fbid primary key(feedback_id),constraint fk_uid1 foreign key (user_id) references users(user_id),constraint fk_eid foreign key(event_id) references events(event_id),constraint chk_rating check (rating>=1 and rating <=5));
+ERROR 1826 (HY000): Duplicate foreign key constraint name 'fk_eid'
+mysql> create table feedback (feedback_id int auto_increment,user_id int,event_id int,rating int,comments text,feedback_date date not null,constraint pk_fbid primary key(feedback_id),constraint fk_uid1 foreign key (user_id) references users(user_id),constraint fk_eid1 foreign key(event_id) references events(event_id),constraint chk_rating check (rating>=1 and rating <=5));
+Query OK, 0 rows affected (0.07 sec)
+
+mysql> desc feedback;
++---------------+------+------+-----+---------+----------------+
+| Field         | Type | Null | Key | Default | Extra          |
++---------------+------+------+-----+---------+----------------+
+| feedback_id   | int  | NO   | PRI | NULL    | auto_increment |
+| user_id       | int  | YES  | MUL | NULL    |                |
+| event_id      | int  | YES  | MUL | NULL    |                |
+| rating        | int  | YES  |     | NULL    |                |
+| comments      | text | YES  |     | NULL    |                |
+| feedback_date | date | NO   |     | NULL    |                |
++---------------+------+------+-----+---------+----------------+
+6 rows in set (0.00 sec)
+
+mysql> create table resources(resource_id int auto_increment,event_id int,resource_type enum ('pdf','image','link'),resource_url varchar(255) not null,uploaded_at datetime not null,constraint pk_rid primary key (resource_id),constraint fk_eid2 foreign key (event_id) references events(event_id));
+Query OK, 0 rows affected (0.10 sec)
+
+mysql> desc resources;
++---------------+----------------------------+------+-----+---------+----------------+
+| Field         | Type                       | Null | Key | Default | Extra          |
++---------------+----------------------------+------+-----+---------+----------------+
+| resource_id   | int                        | NO   | PRI | NULL    | auto_increment |
+| event_id      | int                        | YES  | MUL | NULL    |                |
+| resource_type | enum('pdf','image','link') | YES  |     | NULL    |                |
+| resource_url  | varchar(255)               | NO   |     | NULL    |                |
+| uploaded_at   | datetime                   | NO   |     | NULL    |                |
++---------------+----------------------------+------+-----+---------+----------------+
+5 rows in set (0.00 sec)
+
+mysql> INSERT INTO users(full_name,email,city,registration_date) VALUES
+    -> ('Alice Johnson','alice@example.com','New York','2024-12-01'),
+    -> ('Bob Smith','bob@example.com','Los Angeles','2024-12-05'),
+    -> ('Charlie Lee','charlie@example.com','Chicago','2024-12-10'),
+    -> ('Diana King','diana@example.com','New York','2025-01-15'),
+    -> ('Ethan Hunt','ethan@example.com','Los Angeles','2025-02-01'),
+    -> ('Frank Miller','frank@example.com','Chicago','2025-05-20'),
+    -> ('Grace Wilson','grace@example.com','New York','2025-06-01'),
+    -> ('Henry Adams','henry@example.com','Los Angeles','2025-06-05');
+ERROR 1054 (42S22): Unknown column 'registration_date' in 'field list'
+mysql> INSERT INTO users(full_name,email,city,registration_date) VALUES
+    -> ('Alice Johnson','alice@example.com','New York','2024-12-01'),
+    -> ('Bob Smith','bob@example.com','Los Angeles','2024-12-05'),
+    -> ('Charlie Lee','charlie@example.com','Chicago','2024-12-10'),
+    -> ('Diana King','diana@example.com','New York','2025-01-15'),
+    -> ('Ethan Hunt','ethan@example.com','Los Angeles','2025-02-01'),
+    -> ('Frank Miller','frank@example.com','Chicago','2025-05-20'),
+    -> ('Grace Wilson','grace@example.com','New York','2025-06-01'),
+    -> ^C
+mysql> INSERT INTO events(title,description,city,start_date,end_date,status,organizer_id) VALUES
+    -> ('Tech Innovators Meetup','A meetup for tech enthusiasts.','New York','2025-06-10 10:00:00','2025-06-10 16:00:00','upcoming',1),
+    -> ('AI & ML Conference','Conference on AI and ML advancements.','Chicago','2025-05-15 09:00:00','2025-05-15 17:00:00','completed',3),
+    -> ('Frontend Development Bootcamp','Hands-on training on frontend tech.','Los Angeles','2025-07-01 10:00:00','2025-07-03 16:00:00','upcoming',2),
+    -> ('Cloud Summit','Cloud computing event','Chicago','2025-08-10 09:00:00','2025-08-10 17:00:00','cancelled',1),
+    -> ('Cyber Security Workshop','Security training','New York','2025-09-01 10:00:00','2025-09-01 16:00:00','upcoming',4);
+ERROR 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`fsd`.`events`, CONSTRAINT `fk_oid` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`user_id`))
+mysql> INSERT INTO users(full_name,email,city,reg_date) VALUES ('Alice Johnson','alice@example.com','New York','2024-12-01'),
+    -> ('Bob Smith','bob@example.com','Los Angeles','2024-12-05'),
+    -> ('Charlie Lee','charlie@example.com','Chicago','2024-12-10'),
+    -> ('Diana King','diana@example.com','New York','2025-01-15'),
+    -> ('Ethan Hunt','ethan@example.com','Los Angeles','2025-02-01'),
+    -> ('Frank Miller','frank@example.com','Chicago','2025-05-20'),
+    -> ('Grace Wilson','grace@example.com','New York','2025-06-01'),
+    -> ('Henry Adams','henry@example.com','Los Angeles','2025-06-05');
+Query OK, 8 rows affected (0.01 sec)
+Records: 8  Duplicates: 0  Warnings: 0
+
+mysql> INSERT INTO events(title,description,city,start_date,end_date,status,organizer_id) VALUES
+    -> ('Tech Innovators Meetup','A meetup for tech enthusiasts.','New York','2025-06-10 10:00:00','2025-06-10 16:00:00','upcoming',1),
+    -> ('AI & ML Conference','Conference on AI and ML advancements.','Chicago','2025-05-15 09:00:00','2025-05-15 17:00:00','completed',3),
+    -> ('Frontend Development Bootcamp','Hands-on training on frontend tech.','Los Angeles','2025-07-01 10:00:00','2025-07-03 16:00:00','upcoming',2),
+    -> ('Cloud Summit','Cloud computing event','Chicago','2025-08-10 09:00:00','2025-08-10 17:00:00','cancelled',1),
+    -> ('Cyber Security Workshop','Security training','New York','2025-09-01 10:00:00','2025-09-01 16:00:00','upcoming',4);
+Query OK, 5 rows affected (0.01 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+
+mysql> INSERT INTO sessions(event_id,title,speaker_name,start_time,end_time) VALUES
+    -> (1,'Opening Keynote','Dr. Tech','2025-06-10 10:00:00','2025-06-10 11:00:00'),
+    -> (1,'Future of Web Dev','Alice Johnson','2025-06-10 11:15:00','2025-06-10 12:30:00'),
+    -> (2,'AI in Healthcare','Charlie Lee','2025-05-15 09:30:00','2025-05-15 11:00:00'),
+    -> (3,'Intro to HTML5','Bob Smith','2025-07-01 10:00:00','2025-07-01 12:00:00'),
+    -> (1,'Modern JavaScript','Alice Johnson','2025-06-10 12:00:00','2025-06-10 13:00:00'),
+    -> (2,'AI Ethics','Charlie Lee','2025-05-15 10:30:00','2025-05-15 12:00:00'),
+    -> (3,'Advanced CSS','Bob Smith','2025-07-01 11:00:00','2025-07-01 13:00:00'),
+    -> (4,'Cloud Basics','Charlie Lee','2025-08-10 09:00:00','2025-08-10 11:00:00'),
+    -> (1,'Backend APIs','Alice Johnson','2025-06-10 12:15:00','2025-06-10 13:30:00');
+ERROR 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`fsd`.`sessions`, CONSTRAINT `fk_eventid` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`))
+mysql> select * from events;
++----------+-------------------------------+---------------------------------------+-------------+---------------------+---------------------+-----------+--------------+
+| event_id | title                         | description                           | city        | start_date          | end_date            | status    | organizer_id |
++----------+-------------------------------+---------------------------------------+-------------+---------------------+---------------------+-----------+--------------+
+|        6 | Tech Innovators Meetup        | A meetup for tech enthusiasts.        | New York    | 2025-06-10 10:00:00 | 2025-06-10 16:00:00 | upcoming  |            1 |
+|        7 | AI & ML Conference            | Conference on AI and ML advancements. | Chicago     | 2025-05-15 09:00:00 | 2025-05-15 17:00:00 | completed |            3 |
+|        8 | Frontend Development Bootcamp | Hands-on training on frontend tech.   | Los Angeles | 2025-07-01 10:00:00 | 2025-07-03 16:00:00 | upcoming  |            2 |
+|        9 | Cloud Summit                  | Cloud computing event                 | Chicago     | 2025-08-10 09:00:00 | 2025-08-10 17:00:00 | cancelled |            1 |
+|       10 | Cyber Security Workshop       | Security training                     | New York    | 2025-09-01 10:00:00 | 2025-09-01 16:00:00 | upcoming  |            4 |
++----------+-------------------------------+---------------------------------------+-------------+---------------------+---------------------+-----------+--------------+
+5 rows in set (0.00 sec)
+
+mysql> truncate table users;
+ERROR 1701 (42000): Cannot truncate a table referenced in a foreign key constraint (`fsd`.`events`, CONSTRAINT `fk_oid`)
+mysql> truncate table events;
+ERROR 1701 (42000): Cannot truncate a table referenced in a foreign key constraint (`fsd`.`sessions`, CONSTRAINT `fk_eventid`)
+mysql> truncate table sessions;
+Query OK, 0 rows affected (0.10 sec)
+
+mysql> truncate table events;
+ERROR 1701 (42000): Cannot truncate a table referenced in a foreign key constraint (`fsd`.`sessions`, CONSTRAINT `fk_eventid`)
+mysql> TRUNCATE TABLE resources;
+Query OK, 0 rows affected (0.09 sec)
+
+mysql> TRUNCATE TABLE feedback;
+Query OK, 0 rows affected (0.09 sec)
+
+mysql> TRUNCATE TABLE registrations;
+Query OK, 0 rows affected (0.23 sec)
+
+mysql> TRUNCATE TABLE sessions;
+Query OK, 0 rows affected (0.08 sec)
+
+mysql> TRUNCATE TABLE events;
+ERROR 1701 (42000): Cannot truncate a table referenced in a foreign key constraint (`fsd`.`sessions`, CONSTRAINT `fk_eventid`)
+mysql> truncate table users;
+ERROR 1701 (42000): Cannot truncate a table referenced in a foreign key constraint (`fsd`.`events`, CONSTRAINT `fk_oid`)
+mysql> SET FOREIGN_KEY_CHECKS = 0;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> 
+mysql> TRUNCATE TABLE resources;
+Query OK, 0 rows affected (0.10 sec)
+
+mysql> TRUNCATE TABLE feedback;
+Query OK, 0 rows affected (0.16 sec)
+
+mysql> TRUNCATE TABLE registrations;
+Query OK, 0 rows affected (0.28 sec)
+
+mysql> TRUNCATE TABLE sessions;
+Query OK, 0 rows affected (0.13 sec)
+
+mysql> TRUNCATE TABLE events;
+Query OK, 0 rows affected (0.09 sec)
+
+mysql> TRUNCATE TABLE users;
+Query OK, 0 rows affected (0.09 sec)
+
+mysql> 
+mysql> SET FOREIGN_KEY_CHECKS = 1;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> desc users;
++-----------+--------------+------+-----+---------+----------------+
+| Field     | Type         | Null | Key | Default | Extra          |
++-----------+--------------+------+-----+---------+----------------+
+| user_id   | int          | NO   | PRI | NULL    | auto_increment |
+| full_name | varchar(100) | NO   |     | NULL    |                |
+| email     | varchar(100) | NO   | UNI | NULL    |                |
+| city      | varchar(100) | NO   |     | NULL    |                |
+| reg_date  | date         | NO   |     | NULL    |                |
++-----------+--------------+------+-----+---------+----------------+
+5 rows in set (0.00 sec)
+
+mysql> desc events;
++--------------+------------------------------------------+------+-----+---------+----------------+
+| Field        | Type                                     | Null | Key | Default | Extra          |
++--------------+------------------------------------------+------+-----+---------+----------------+
+| event_id     | int                                      | NO   | PRI | NULL    | auto_increment |
+| title        | varchar(200)                             | NO   |     | NULL    |                |
+| description  | text                                     | YES  |     | NULL    |                |
+| city         | varchar(100)                             | NO   |     | NULL    |                |
+| start_date   | datetime                                 | NO   |     | NULL    |                |
+| end_date     | datetime                                 | NO   |     | NULL    |                |
+| status       | enum('upcoming','completed','cancelled') | YES  |     | NULL    |                |
+| organizer_id | int                                      | YES  | MUL | NULL    |                |
++--------------+------------------------------------------+------+-----+---------+----------------+
+8 rows in set (0.00 sec)
+
+mysql> desc sessions;
++--------------+--------------+------+-----+---------+----------------+
+| Field        | Type         | Null | Key | Default | Extra          |
++--------------+--------------+------+-----+---------+----------------+
+| session_id   | int          | NO   | PRI | NULL    | auto_increment |
+| event_id     | int          | YES  | MUL | NULL    |                |
+| title        | varchar(200) | NO   |     | NULL    |                |
+| speaker_name | varchar(100) | NO   |     | NULL    |                |
+| start_time   | datetime     | NO   |     | NULL    |                |
+| end_time     | datetime     | NO   |     | NULL    |                |
++--------------+--------------+------+-----+---------+----------------+
+6 rows in set (0.00 sec)
+
+mysql> desc registrations;
++-------------------+------+------+-----+---------+----------------+
+| Field             | Type | Null | Key | Default | Extra          |
++-------------------+------+------+-----+---------+----------------+
+| registration_id   | int  | NO   | PRI | NULL    | auto_increment |
+| user_id           | int  | YES  | MUL | NULL    |                |
+| event_id          | int  | YES  | MUL | NULL    |                |
+| registration_date | date | NO   |     | NULL    |                |
++-------------------+------+------+-----+---------+----------------+
+4 rows in set (0.00 sec)
+
+mysql> desc feedback;
++---------------+------+------+-----+---------+----------------+
+| Field         | Type | Null | Key | Default | Extra          |
++---------------+------+------+-----+---------+----------------+
+| feedback_id   | int  | NO   | PRI | NULL    | auto_increment |
+| user_id       | int  | YES  | MUL | NULL    |                |
+| event_id      | int  | YES  | MUL | NULL    |                |
+| rating        | int  | YES  |     | NULL    |                |
+| comments      | text | YES  |     | NULL    |                |
+| feedback_date | date | NO   |     | NULL    |                |
++---------------+------+------+-----+---------+----------------+
+6 rows in set (0.00 sec)
+
+mysql> desc resources;
++---------------+----------------------------+------+-----+---------+----------------+
+| Field         | Type                       | Null | Key | Default | Extra          |
++---------------+----------------------------+------+-----+---------+----------------+
+| resource_id   | int                        | NO   | PRI | NULL    | auto_increment |
+| event_id      | int                        | YES  | MUL | NULL    |                |
+| resource_type | enum('pdf','image','link') | YES  |     | NULL    |                |
+| resource_url  | varchar(255)               | NO   |     | NULL    |                |
+| uploaded_at   | datetime                   | NO   |     | NULL    |                |
++---------------+----------------------------+------+-----+---------+----------------+
+5 rows in set (0.00 sec)
+
+mysql> INSERT INTO users(full_name,email,city,reg_date) VALUES
+    -> ('Alice Johnson','alice@example.com','New York','2024-12-01'),
+    -> ('Bob Smith','bob@example.com','Los Angeles','2024-12-05'),
+    -> ('Charlie Lee','charlie@example.com','Chicago','2024-12-10'),
+    -> ('Diana King','diana@example.com','New York','2025-01-15'),
+    -> ('Ethan Hunt','ethan@example.com','Los Angeles','2025-02-01'),
+    -> ('Frank Miller','frank@example.com','Chicago','2025-05-20'),
+    -> ('Grace Wilson','grace@example.com','New York','2025-06-01'),
+    -> ('Henry Adams','henry@example.com','Los Angeles','2025-06-05');
+Query OK, 8 rows affected (0.01 sec)
+Records: 8  Duplicates: 0  Warnings: 0
+
+mysql> INSERT INTO events(title,description,city,start_date,end_date,status,organizer_id) VALUES
+    -> ('Tech Innovators Meetup','A meetup for tech enthusiasts.','New York','2025-06-10 10:00:00','2025-06-10 16:00:00','upcoming',1),
+    -> ('AI & ML Conference','Conference on AI and ML advancements.','Chicago','2025-05-15 09:00:00','2025-05-15 17:00:00','completed',3),
+    -> ('Frontend Development Bootcamp','Hands-on training on frontend tech.','Los Angeles','2025-07-01 10:00:00','2025-07-03 16:00:00','upcoming',2),
+    -> ('Cloud Summit','Cloud computing event','Chicago','2025-08-10 09:00:00','2025-08-10 17:00:00','cancelled',1),
+    -> ('Cyber Security Workshop','Security training','New York','2025-09-01 10:00:00','2025-09-01 16:00:00','upcoming',4);
+Query OK, 5 rows affected (0.02 sec)
+Records: 5  Duplicates: 0  Warnings: 0
+
+mysql> INSERT INTO sessions(event_id,title,speaker_name,start_time,end_time) VALUES
+    -> (1,'Opening Keynote','Dr. Tech','2025-06-10 10:00:00','2025-06-10 11:00:00'),
+    -> (1,'Future of Web Dev','Alice Johnson','2025-06-10 11:15:00','2025-06-10 12:30:00'),
+    -> (2,'AI in Healthcare','Charlie Lee','2025-05-15 09:30:00','2025-05-15 11:00:00'),
+    -> (3,'Intro to HTML5','Bob Smith','2025-07-01 10:00:00','2025-07-01 12:00:00'),
+    -> (1,'Modern JavaScript','Alice Johnson','2025-06-10 12:00:00','2025-06-10 13:00:00'),
+    -> (2,'AI Ethics','Charlie Lee','2025-05-15 10:30:00','2025-05-15 12:00:00'),
+    -> (3,'Advanced CSS','Bob Smith','2025-07-01 11:00:00','2025-07-01 13:00:00'),
+    -> (4,'Cloud Basics','Charlie Lee','2025-08-10 09:00:00','2025-08-10 11:00:00'),
+    -> (1,'Backend APIs','Alice Johnson','2025-06-10 12:15:00','2025-06-10 13:30:00');
+Query OK, 9 rows affected (0.01 sec)
+Records: 9  Duplicates: 0  Warnings: 0
+
+mysql> INSERT INTO registrations(user_id,event_id,registration_date) VALUES
+    -> (1,1,'2025-05-01'),
+    -> (2,1,'2025-05-02'),
+    -> (3,2,'2025-04-30'),
+    -> (4,2,'2025-04-28'),
+    -> (5,3,'2025-06-15'),
+    -> (1,2,'2025-05-05'),
+    -> (1,2,'2025-05-06'),
+    -> (2,3,'2025-06-20'),
+    -> (3,1,'2025-05-03'),
+    -> (6,1,'2025-06-01'),
+    -> (7,3,'2025-06-10'),
+    -> (8,4,'2025-07-20');
+Query OK, 12 rows affected (0.01 sec)
+Records: 12  Duplicates: 0  Warnings: 0
+
+mysql> INSERT INTO feedback(user_id,event_id,rating,comments,feedback_date) VALUES
+    -> (3,2,4,'Great insights!','2025-05-16'),
+    -> (4,2,5,'Very informative.','2025-05-16'),
+    -> (2,1,3,'Could be better.','2025-06-11'),
+    -> (1,2,5,'Excellent','2025-05-16'),
+    -> (2,2,4,'Nice event','2025-05-16'),
+    -> (5,2,5,'Loved it','2025-05-16'),
+    -> (6,2,5,'Amazing','2025-05-16'),
+    -> (7,2,4,'Good','2025-05-16'),
+    -> (8,2,5,'Very useful','2025-05-16'),
+    -> (1,1,2,'Poor timing','2025-06-11'),
+    -> (3,1,1,'Bad management','2025-06-11'),
+    -> (5,1,3,'Average','2025-06-11'),
+    -> (6,1,4,'Good learning','2025-06-11');
+Query OK, 13 rows affected (0.02 sec)
+Records: 13  Duplicates: 0  Warnings: 0
+
+mysql> INSERT INTO resources(event_id,resource_type,resource_url,uploaded_at) VALUES
+    -> (1,'pdf','https://portal.com/resources/tech_meetup_agenda.pdf','2025-05-01 10:00:00'),
+    -> (2,'image','https://portal.com/resources/ai_poster.jpg','2025-04-20 09:00:00'),
+    -> (3,'link','https://portal.com/resources/html5_docs','2025-06-25 15:00:00'),
+    -> (1,'image','https://portal.com/event1_banner.jpg','2025-05-02 10:00:00'),
+    -> (2,'pdf','https://portal.com/ai_slides.pdf','2025-04-21 09:00:00'),
+    -> (2,'link','https://portal.com/ai_material','2025-04-21 11:00:00'),
+    -> (4,'pdf','https://portal.com/cloud_notes.pdf','2025-07-15 10:00:00');
+Query OK, 7 rows affected (0.01 sec)
+Records: 7  Duplicates: 0  Warnings: 0
+
+mysql> select u.full_name,e.title,e.start_date from users u inner join events e on u.city=e.city order by start_date;
++---------------+-------------------------------+---------------------+
+| full_name     | title                         | start_date          |
++---------------+-------------------------------+---------------------+
+| Charlie Lee   | AI & ML Conference            | 2025-05-15 09:00:00 |
+| Frank Miller  | AI & ML Conference            | 2025-05-15 09:00:00 |
+| Alice Johnson | Tech Innovators Meetup        | 2025-06-10 10:00:00 |
+| Diana King    | Tech Innovators Meetup        | 2025-06-10 10:00:00 |
+| Grace Wilson  | Tech Innovators Meetup        | 2025-06-10 10:00:00 |
+| Bob Smith     | Frontend Development Bootcamp | 2025-07-01 10:00:00 |
+| Ethan Hunt    | Frontend Development Bootcamp | 2025-07-01 10:00:00 |
+| Henry Adams   | Frontend Development Bootcamp | 2025-07-01 10:00:00 |
+| Charlie Lee   | Cloud Summit                  | 2025-08-10 09:00:00 |
+| Frank Miller  | Cloud Summit                  | 2025-08-10 09:00:00 |
+| Alice Johnson | Cyber Security Workshop       | 2025-09-01 10:00:00 |
+| Diana King    | Cyber Security Workshop       | 2025-09-01 10:00:00 |
+| Grace Wilson  | Cyber Security Workshop       | 2025-09-01 10:00:00 |
++---------------+-------------------------------+---------------------+
+13 rows in set (0.00 sec)
+
+mysql> select e.title,avg(f.rating) as avg_rating,count(f.feedback_id) as total_feedbacks from events e inner join feedback f on e.event_id=f.event_id group by e.event_id having count(f.feedback_id)>=10 order by avg_rating desc;
+Empty set (0.00 sec)
+
+mysql> select * from users where datediff(curdate(),reg_date)>90;
++---------+---------------+---------------------+-------------+------------+
+| user_id | full_name     | email               | city        | reg_date   |
++---------+---------------+---------------------+-------------+------------+
+|       1 | Alice Johnson | alice@example.com   | New York    | 2024-12-01 |
+|       2 | Bob Smith     | bob@example.com     | Los Angeles | 2024-12-05 |
+|       3 | Charlie Lee   | charlie@example.com | Chicago     | 2024-12-10 |
+|       4 | Diana King    | diana@example.com   | New York    | 2025-01-15 |
+|       5 | Ethan Hunt    | ethan@example.com   | Los Angeles | 2025-02-01 |
+|       6 | Frank Miller  | frank@example.com   | Chicago     | 2025-05-20 |
+|       7 | Grace Wilson  | grace@example.com   | New York    | 2025-06-01 |
+|       8 | Henry Adams   | henry@example.com   | Los Angeles | 2025-06-05 |
++---------+---------------+---------------------+-------------+------------+
+8 rows in set (0.00 sec)
+
+mysql> notee;
+mysql> select e.title,count(s.session_id) from events e inner join sessions s on e.event_id = s.event_id where time(s.start_time)>=10 and time(s.end_time)<=12 group by e.event_id;
+Empty set (0.02 sec)
+
+mysql> select e.title,count(s.session_id) from events e inner join sessions s on e.event_id = s.event_id where hour(s.start_time)<12 and hour(s.end_time)>10 group by e.event_id;
++-------------------------------+---------------------+
+| title                         | count(s.session_id) |
++-------------------------------+---------------------+
+| Tech Innovators Meetup        |                   2 |
+| AI & ML Conference            |                   2 |
+| Frontend Development Bootcamp |                   2 |
+| Cloud Summit                  |                   1 |
++-------------------------------+---------------------+
+4 rows in set (0.03 sec)
+
+mysql> select u.city,count(distinct u.user_id) as count from users u inner join registrations r on u.user_id = r.user_id group by u.cityorder by count(distinct u.user_id) desc;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'by count(distinct u.user_id) desc' at line 1
+mysql> select u.city,count(distinct u.user_id) as count from users u inner join registrations r on u.user_id = r.user_id group by u.city order by count(distinct u.user_id) desc;
++-------------+-------+
+| city        | count |
++-------------+-------+
+| Los Angeles |     3 |
+| New York    |     3 |
+| Chicago     |     2 |
++-------------+-------+
+3 rows in set (0.01 sec)
+
+mysql> select e.title,count(r.resource_id) from events e inner join resources r on e.event_id=r.event_id group by e.event_id;
++-------------------------------+----------------------+
+| title                         | count(r.resource_id) |
++-------------------------------+----------------------+
+| Tech Innovators Meetup        |                    2 |
+| AI & ML Conference            |                    3 |
+| Frontend Development Bootcamp |                    1 |
+| Cloud Summit                  |                    1 |
++-------------------------------+----------------------+
+4 rows in set (0.00 sec)
+
+mysql> select * from events;
++----------+-------------------------------+---------------------------------------+-------------+---------------------+---------------------+-----------+--------------+
+| event_id | title                         | description                           | city        | start_date          | end_date            | status    | organizer_id |
++----------+-------------------------------+---------------------------------------+-------------+---------------------+---------------------+-----------+--------------+
+|        1 | Tech Innovators Meetup        | A meetup for tech enthusiasts.        | New York    | 2025-06-10 10:00:00 | 2025-06-10 16:00:00 | upcoming  |            1 |
+|        2 | AI & ML Conference            | Conference on AI and ML advancements. | Chicago     | 2025-05-15 09:00:00 | 2025-05-15 17:00:00 | completed |            3 |
+|        3 | Frontend Development Bootcamp | Hands-on training on frontend tech.   | Los Angeles | 2025-07-01 10:00:00 | 2025-07-03 16:00:00 | upcoming  |            2 |
+|        4 | Cloud Summit                  | Cloud computing event                 | Chicago     | 2025-08-10 09:00:00 | 2025-08-10 17:00:00 | cancelled |            1 |
+|        5 | Cyber Security Workshop       | Security training                     | New York    | 2025-09-01 10:00:00 | 2025-09-01 16:00:00 | upcoming  |            4 |
++----------+-------------------------------+---------------------------------------+-------------+---------------------+---------------------+-----------+--------------+
+5 rows in set (0.00 sec)
+
+mysql> select * from resources;
++-------------+----------+---------------+-----------------------------------------------------+---------------------+
+| resource_id | event_id | resource_type | resource_url                                        | uploaded_at         |
++-------------+----------+---------------+-----------------------------------------------------+---------------------+
+|           1 |        1 | pdf           | https://portal.com/resources/tech_meetup_agenda.pdf | 2025-05-01 10:00:00 |
+|           2 |        2 | image         | https://portal.com/resources/ai_poster.jpg          | 2025-04-20 09:00:00 |
+|           3 |        3 | link          | https://portal.com/resources/html5_docs             | 2025-06-25 15:00:00 |
+|           4 |        1 | image         | https://portal.com/event1_banner.jpg                | 2025-05-02 10:00:00 |
+|           5 |        2 | pdf           | https://portal.com/ai_slides.pdf                    | 2025-04-21 09:00:00 |
+|           6 |        2 | link          | https://portal.com/ai_material                      | 2025-04-21 11:00:00 |
+|           7 |        4 | pdf           | https://portal.com/cloud_notes.pdf                  | 2025-07-15 10:00:00 |
++-------------+----------+---------------+-----------------------------------------------------+---------------------+
+7 rows in set (0.00 sec)
+
+mysql> select u.full_name,e.title,f.comments from users u inner join feedback f on u.user_id = f.user_id inner join events e on f.event_id=e.event_id where f.rating<3;
++---------------+------------------------+----------------+
+| full_name     | title                  | comments       |
++---------------+------------------------+----------------+
+| Alice Johnson | Tech Innovators Meetup | Poor timing    |
+| Charlie Lee   | Tech Innovators Meetup | Bad management |
++---------------+------------------------+----------------+
+2 rows in set (0.00 sec)
+
+mysql> select u.full_name,e.title,f.comments,f.rating from users u inner join feedback f on u.user_id = f.user_id inner join events e on f.event_id=e.event_id where f.rating<3;
++---------------+------------------------+----------------+--------+
+| full_name     | title                  | comments       | rating |
++---------------+------------------------+----------------+--------+
+| Alice Johnson | Tech Innovators Meetup | Poor timing    |      2 |
+| Charlie Lee   | Tech Innovators Meetup | Bad management |      1 |
++---------------+------------------------+----------------+--------+
+2 rows in set (0.00 sec)
+
+mysql> select e.title,count(s.session_id) as count from events e inner join sessions s on e.event_id = s.event_id where e.status='upcoming' group by e.event_id;
++-------------------------------+-------+
+| title                         | count |
++-------------------------------+-------+
+| Tech Innovators Meetup        |     4 |
+| Frontend Development Bootcamp |     2 |
++-------------------------------+-------+
+2 rows in set (0.00 sec)
+
+mysql> select * from sessions;
++------------+----------+-------------------+---------------+---------------------+---------------------+
+| session_id | event_id | title             | speaker_name  | start_time          | end_time            |
++------------+----------+-------------------+---------------+---------------------+---------------------+
+|          1 |        1 | Opening Keynote   | Dr. Tech      | 2025-06-10 10:00:00 | 2025-06-10 11:00:00 |
+|          2 |        1 | Future of Web Dev | Alice Johnson | 2025-06-10 11:15:00 | 2025-06-10 12:30:00 |
+|          3 |        2 | AI in Healthcare  | Charlie Lee   | 2025-05-15 09:30:00 | 2025-05-15 11:00:00 |
+|          4 |        3 | Intro to HTML5    | Bob Smith     | 2025-07-01 10:00:00 | 2025-07-01 12:00:00 |
+|          5 |        1 | Modern JavaScript | Alice Johnson | 2025-06-10 12:00:00 | 2025-06-10 13:00:00 |
+|          6 |        2 | AI Ethics         | Charlie Lee   | 2025-05-15 10:30:00 | 2025-05-15 12:00:00 |
+|          7 |        3 | Advanced CSS      | Bob Smith     | 2025-07-01 11:00:00 | 2025-07-01 13:00:00 |
+|          8 |        4 | Cloud Basics      | Charlie Lee   | 2025-08-10 09:00:00 | 2025-08-10 11:00:00 |
+|          9 |        1 | Backend APIs      | Alice Johnson | 2025-06-10 12:15:00 | 2025-06-10 13:30:00 |
++------------+----------+-------------------+---------------+---------------------+---------------------+
+9 rows in set (0.00 sec)
+
+mysql> select u.full_name,count(e.event_id) from users u inner join event e on u.user_id = e.organizer_id group by u.user-id;
+ERROR 1146 (42S02): Table 'fsd.event' doesn't exist
+mysql> select u.full_name,count(e.event_id) from users u inner join events e on u.user_id = e.organizer_id group by u.user-id;
+ERROR 1054 (42S22): Unknown column 'u.user' in 'group statement'
+mysql> select u.full_name,count(e.event_id) from users u inner join events e on u.user_id = e.organizer_id group by u.user_id;
++---------------+-------------------+
+| full_name     | count(e.event_id) |
++---------------+-------------------+
+| Alice Johnson |                 2 |
+| Bob Smith     |                 1 |
+| Charlie Lee   |                 1 |
+| Diana King    |                 1 |
++---------------+-------------------+
+4 rows in set (0.00 sec)
+
+mysql> select u.full_name,e.status,count(e.event_id) from users u inner join events e on u.user_id = e.organizer_id group by u.user_id e.status;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'e.status' at line 1
+mysql> select u.full_name,e.status,count(e.event_id) from users u inner join events e on u.user_id = e.organizer_id group by u.user_id,e.status;
++---------------+-----------+-------------------+
+| full_name     | status    | count(e.event_id) |
++---------------+-----------+-------------------+
+| Alice Johnson | upcoming  |                 1 |
+| Charlie Lee   | completed |                 1 |
+| Bob Smith     | upcoming  |                 1 |
+| Alice Johnson | cancelled |                 1 |
+| Diana King    | upcoming  |                 1 |
++---------------+-----------+-------------------+
+5 rows in set (0.00 sec)
+
+mysql> select e.event_id,e.title from events e inner join registrations r on e.event_id = r.event_id left join feedback f on e.event_id=f.event_id where f.feedback_id is null;
++----------+-------------------------------+
+| event_id | title                         |
++----------+-------------------------------+
+|        3 | Frontend Development Bootcamp |
+|        3 | Frontend Development Bootcamp |
+|        3 | Frontend Development Bootcamp |
+|        4 | Cloud Summit                  |
++----------+-------------------------------+
+4 rows in set (0.02 sec)
+
+mysql> select * from reegistrations;
+ERROR 1146 (42S02): Table 'fsd.reegistrations' doesn't exist
+mysql> select * from registrations;
++-----------------+---------+----------+-------------------+
+| registration_id | user_id | event_id | registration_date |
++-----------------+---------+----------+-------------------+
+|               1 |       1 |        1 | 2025-05-01        |
+|               2 |       2 |        1 | 2025-05-02        |
+|               3 |       3 |        2 | 2025-04-30        |
+|               4 |       4 |        2 | 2025-04-28        |
+|               5 |       5 |        3 | 2025-06-15        |
+|               6 |       1 |        2 | 2025-05-05        |
+|               7 |       1 |        2 | 2025-05-06        |
+|               8 |       2 |        3 | 2025-06-20        |
+|               9 |       3 |        1 | 2025-05-03        |
+|              10 |       6 |        1 | 2025-06-01        |
+|              11 |       7 |        3 | 2025-06-10        |
+|              12 |       8 |        4 | 2025-07-20        |
++-----------------+---------+----------+-------------------+
+12 rows in set (0.00 sec)
+
+mysql> select * from feedback;
++-------------+---------+----------+--------+-------------------+---------------+
+| feedback_id | user_id | event_id | rating | comments          | feedback_date |
++-------------+---------+----------+--------+-------------------+---------------+
+|           1 |       3 |        2 |      4 | Great insights!   | 2025-05-16    |
+|           2 |       4 |        2 |      5 | Very informative. | 2025-05-16    |
+|           3 |       2 |        1 |      3 | Could be better.  | 2025-06-11    |
+|           4 |       1 |        2 |      5 | Excellent         | 2025-05-16    |
+|           5 |       2 |        2 |      4 | Nice event        | 2025-05-16    |
+|           6 |       5 |        2 |      5 | Loved it          | 2025-05-16    |
+|           7 |       6 |        2 |      5 | Amazing           | 2025-05-16    |
+|           8 |       7 |        2 |      4 | Good              | 2025-05-16    |
+|           9 |       8 |        2 |      5 | Very useful       | 2025-05-16    |
+|          10 |       1 |        1 |      2 | Poor timing       | 2025-06-11    |
+|          11 |       3 |        1 |      1 | Bad management    | 2025-06-11    |
+|          12 |       5 |        1 |      3 | Average           | 2025-06-11    |
+|          13 |       6 |        1 |      4 | Good learning     | 2025-06-11    |
++-------------+---------+----------+--------+-------------------+---------------+
+13 rows in set (0.00 sec)
+
+mysql> select count(u.user_id) as count from users u inner join registrations r where datediff(curdate(),r.registration_date)<=7 having count(dist r.registration_date)=7;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'r.registration_date)=7' at line 1
+mysql> select count(u.user_id) as count from users u inner join registrations r on u.user_id=r.user_id where group by r.registration_date order by r.registration_date limit 7;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'group by r.registration_date order by r.registration_date limit 7' at line 1
+mysql> select count(u.user_id) as count from users u inner join registrations r on u.user_id=r.user_id group by r.registration_date order by r.registration_date limit 7;
++-------+
+| count |
++-------+
+|     1 |
+|     1 |
+|     1 |
+|     1 |
+|     1 |
+|     1 |
+|     1 |
++-------+
+7 rows in set (0.00 sec)
+
+mysql> select count(u.user_id) as count from users u inner join registrations r on u.user_id=r.user_id where datediff(curdate(),r.registration_date)<=7 group by r.registration_date order by r.registration_date;
+Empty set (0.00 sec)
+
+mysql> notee;
+mysql> select e.event_id,e.title,count(s.session_id) as session_count from events e inner join sessions s on e.event_id=s.event_id group by e.event_id order by count(s.session_id) desc;
++----------+-------------------------------+---------------+
+| event_id | title                         | session_count |
++----------+-------------------------------+---------------+
+|        1 | Tech Innovators Meetup        |             4 |
+|        2 | AI & ML Conference            |             2 |
+|        3 | Frontend Development Bootcamp |             2 |
+|        4 | Cloud Summit                  |             1 |
++----------+-------------------------------+---------------+
+4 rows in set (0.00 sec)
+
+mysql> select e.event_id,e.title,count(s.session_id) as session_count from events e inner join sessions s on e.event_id=s.event_id group by e.event_id having count(s.session_id)=(select max(s.session_id) from (select count(s.session_id) as sessioncount from sessions group by event_id));
+ERROR 1248 (42000): Every derived table must have its own alias
+mysql> select e.event_id,e.title,count(s.session_id) as session_count from events e inner join sessions s on e.event_id=s.event_id group by e.event_id having count(s.session_id)=(select max(s.session_id) from (select count(s.session_id) as sessioncount from s group by s.event_id));
+ERROR 1248 (42000): Every derived table must have its own alias
+mysql> select e.event_id,e.title,count(s.session_id) as session_count from events e inner join sessions s on e.event_id=s.event_id group by e.event_id having count(s.session_id)=(select max(sessioncount) from (select count(session_id) as sessioncount from sessions group by event_id)t);
++----------+------------------------+---------------+
+| event_id | title                  | session_count |
++----------+------------------------+---------------+
+|        1 | Tech Innovators Meetup |             4 |
++----------+------------------------+---------------+
+1 row in set (0.00 sec)
+
+mysql> select e.city,avg(f.rating) from events e inner join feedback f on e.event_id=f.event_id group by e.city;
++----------+---------------+
+| city     | avg(f.rating) |
++----------+---------------+
+| New York |        2.6000 |
+| Chicago  |        4.6250 |
++----------+---------------+
+2 rows in set (0.00 sec)
+
+mysql> select from events e inner join registrations r on e.event_id=r.event_id group by e.event_name order by count(r.registration_id) limit=3;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'from events e inner join registrations r on e.event_id=r.event_id group by e.eve' at line 1
+mysql> select e.event_name,count(r.registration_id) as registrationcount from events e inner join registrations r on e.event_id=r.event_id group by e.event_name order by count(r.registration_id) limit=3;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '=3' at line 1
+mysql> select e.event_name,count(r.registration_id) as registrationcount from events e inner join registrations r on e.event_id=r.event_id group by e.event_name order by count(r.registration_id) limit 3;
+ERROR 1054 (42S22): Unknown column 'e.event_name' in 'field list'
+mysql> select e.full_name,count(r.registration_id) as registrationcount from events e inner join registrations r on e.event_id=r.event_id group by e.event_name order by count(r.registration_id) limit=3;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '=3' at line 1
+mysql> select e.full_name,count(r.registration_id) as registrationcount from events e inner join registrations r on e.event_id=r.event_id group by e.event_name order by count(r.registration_id) limit 3;
+ERROR 1054 (42S22): Unknown column 'e.full_name' in 'field list'
+mysql> select e.title,count(r.registration_id) as registrationcount from events e inner join registrations r on e.event_id=r.event_id group by e.event_name order by count(r.registration_id) limit 3;
+ERROR 1054 (42S22): Unknown column 'e.event_name' in 'group statement'
+mysql> select e.title,count(r.registration_id) as registrationcount from events e inner join registrations r on e.event_id=r.event_id group by e.event_id order by count(r.registration_id) limit 3;
++-------------------------------+-------------------+
+| title                         | registrationcount |
++-------------------------------+-------------------+
+| Cloud Summit                  |                 1 |
+| Frontend Development Bootcamp |                 3 |
+| Tech Innovators Meetup        |                 4 |
++-------------------------------+-------------------+
+3 rows in set (0.00 sec)
+
+mysql> select e.title,count(r.registration_id) as registrationcount from events e inner join registrations r on e.event_id=r.event_id group by e.event_id order by count(r.registration_id) desc limit 3;
++-------------------------------+-------------------+
+| title                         | registrationcount |
++-------------------------------+-------------------+
+| Tech Innovators Meetup        |                 4 |
+| AI & ML Conference            |                 4 |
+| Frontend Development Bootcamp |                 3 |
++-------------------------------+-------------------+
+3 rows in set (0.00 sec)
+
+mysql> select from users u left join registrations r on u.user_id=r.user_idwhere datediff(curdate(),u.registration_date)<=30 and r.registration_id is null;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'from users u left join registrations r on u.user_id=r.user_idwhere datediff(curd' at line 1
+mysql> select from users u left join registrations r on u.user_id=r.user_id where datediff(curdate(),u.registration_date)<=30 and r.registration_id is null;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'from users u left join registrations r on u.user_id=r.user_id where datediff(cur' at line 1
+mysql> select u.full_name from users u left join registrations r on u.user_id=r.user_id where datediff(curdate(),u.reg_date)<=30 and r.registration_id is null;
+Empty set (0.01 sec)
+
+mysql> select speaker_name from sessions group by speaker_name having count(event_id)>1;
++---------------+
+| speaker_name  |
++---------------+
+| Alice Johnson |
+| Charlie Lee   |
+| Bob Smith     |
++---------------+
+3 rows in set (0.00 sec)
+
+mysql> select e.title,count(r.registration_id) as regcount,avg(f.rating) as avgrating from events e inner join feedback f on e.event_id=f.event_id inner join registrations r on e.event_id=r.event_id where datediff(curdate(),e.end_date)>0 group by e.event_id;
++------------------------+----------+-----------+
+| title                  | regcount | avgrating |
++------------------------+----------+-----------+
+| Tech Innovators Meetup |       20 |    2.6000 |
+| AI & ML Conference     |       32 |    4.6250 |
++------------------------+----------+-----------+
+2 rows in set (0.00 sec)
+
+mysql> select u.full_name, count(f.feedback_id) as feedbacks from users u inner join feedback f on u.user_id = f.user_id group by u.user_id order by count(f.feedback_id) desc limit 5;
++---------------+-----------+
+| full_name     | feedbacks |
++---------------+-----------+
+| Alice Johnson |         2 |
+| Bob Smith     |         2 |
+| Charlie Lee   |         2 |
+| Ethan Hunt    |         2 |
+| Frank Miller  |         2 |
++---------------+-----------+
+5 rows in set (0.00 sec)
+
+mysql> select e.event_id, e.title from events e left join sessions s on e.event_id=s.event_id where s.event_id is null; 
++----------+-------------------------+
+| event_id | title                   |
++----------+-------------------------+
+|        5 | Cyber Security Workshop |
++----------+-------------------------+
+1 row in set (0.00 sec)
+
+mysql> select e.event_id, e.title,avg(timestampdiff(minute,s.start_time,s.end_time)) from events e inner join sessions s on e.event_id=s.event_id group by e.event_id; 
++----------+-------------------------------+----------------------------------------------------+
+| event_id | title                         | avg(timestampdiff(minute,s.start_time,s.end_time)) |
++----------+-------------------------------+----------------------------------------------------+
+|        1 | Tech Innovators Meetup        |                                            67.5000 |
+|        2 | AI & ML Conference            |                                            90.0000 |
+|        3 | Frontend Development Bootcamp |                                           120.0000 |
+|        4 | Cloud Summit                  |                                           120.0000 |
++----------+-------------------------------+----------------------------------------------------+
+4 rows in set (0.00 sec)
+
+mysql> select u.user_id,e.title from users u inner join registrations r on u.user_id=r.user_id inner join r.event_id = e.event_id group by u.user_id,e.event_id having count(r.registration_id)>1;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '= e.event_id group by u.user_id,e.event_id having count(r.registration_id)>1' at line 1
+mysql> select u.user_id,e.title from users u inner join registrations r on u.user_id=r.user_id inner join events e on r.event_id = e.event_id group by u.user_id,e.event_id having count(r.registration_id)>1;
++---------+--------------------+
+| user_id | title              |
++---------+--------------------+
+|       1 | AI & ML Conference |
++---------+--------------------+
+1 row in set (0.00 sec)
+
+mysql> select u.full_name,count(distinct e.event_id),count(f.feedback_id) from users u inner join feedback f on u.user_id = f.user_id inner join events e on e.event_id=f.event_id group by u.user_id;
++---------------+----------------------------+----------------------+
+| full_name     | count(distinct e.event_id) | count(f.feedback_id) |
++---------------+----------------------------+----------------------+
+| Alice Johnson |                          2 |                    2 |
+| Bob Smith     |                          2 |                    2 |
+| Charlie Lee   |                          2 |                    2 |
+| Diana King    |                          1 |                    1 |
+| Ethan Hunt    |                          2 |                    2 |
+| Frank Miller  |                          2 |                    2 |
+| Grace Wilson  |                          1 |                    1 |
+| Henry Adams   |                          1 |                    1 |
++---------------+----------------------------+----------------------+
+8 rows in set (0.00 sec)
+
+mysql> select month(registration_date) as month,count(registration_id) from registrations group by month(registration_date) having year(registration_date)=year(curdate());
+ERROR 1054 (42S22): Unknown column 'registration_date' in 'having clause'
+mysql> desc registrations;
++-------------------+------+------+-----+---------+----------------+
+| Field             | Type | Null | Key | Default | Extra          |
++-------------------+------+------+-----+---------+----------------+
+| registration_id   | int  | NO   | PRI | NULL    | auto_increment |
+| user_id           | int  | YES  | MUL | NULL    |                |
+| event_id          | int  | YES  | MUL | NULL    |                |
+| registration_date | date | NO   |     | NULL    |                |
++-------------------+------+------+-----+---------+----------------+
+4 rows in set (0.01 sec)
+
+mysql> select month(registration_date) as month,count(registration_id) from registrations where year(registration_date)=year(curdate()) group by month(registration_date);
+Empty set (0.00 sec)
+
+mysql> select e.title from events left join resources r on e.event_id=r.event_id where r.event_id is null;
+ERROR 1054 (42S22): Unknown column 'e.title' in 'field list'
+mysql> select e.title from events e left join resources r on e.event_id=r.event_id where r.event_id is null;
++-------------------------+
+| title                   |
++-------------------------+
+| Cyber Security Workshop |
++-------------------------+
+1 row in set (0.00 sec)
+
+mysql> notee;
